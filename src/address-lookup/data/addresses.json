@@ -1,0 +1,78 @@
+{
+  "NE47AR": [
+    {
+      "addressLine": "ENVIRONMENT AGENCY, TYNESIDE HOUSE, SKINNERBURN ROAD, NEWCASTLE BUSINESS PARK, NEWCASTLE UPON TYNE, NE4 7AR",
+      "subBuildingName": "ENVIRONMENT AGENCY",
+      "buildingName": "TYNESIDE HOUSE",
+      "street": "SKINNERBURN ROAD",
+      "locality": "NEWCASTLE BUSINESS PARK",
+      "town": "NEWCASTLE UPON TYNE",
+      "administrativeArea": "NEWCASTLE UPON TYNE",
+      "historicCounty": "NORTHUMBERLAND",
+      "ceremonialCounty": "TYNE & WEAR",
+      "postcode": "NE4 7AR",
+      "country": "ENGLAND",
+      "xCoordinate": 423646,
+      "yCoordinate": 562927,
+      "uprn": "4510116883",
+      "match": "1",
+      "matchDescription": "EXACT",
+      "language": "EN"
+    }
+  ],
+  "NE11EE": [
+    {
+      "addressLine": "1, QUAYSIDE HOUSE, QUAYSIDE, NEWCASTLE UPON TYNE, NE1 1EE",
+      "buildingNumber": "1",
+      "buildingName": "QUAYSIDE HOUSE",
+      "street": "QUAYSIDE",
+      "town": "NEWCASTLE UPON TYNE",
+      "administrativeArea": "NEWCASTLE UPON TYNE",
+      "historicCounty": "NORTHUMBERLAND",
+      "ceremonialCounty": "TYNE & WEAR",
+      "postcode": "NE1 1EE",
+      "country": "ENGLAND",
+      "xCoordinate": 425123,
+      "yCoordinate": 564211,
+      "uprn": "4510116884",
+      "match": "1",
+      "matchDescription": "EXACT",
+      "language": "EN"
+    },
+    {
+      "addressLine": "2, QUAYSIDE HOUSE, QUAYSIDE, NEWCASTLE UPON TYNE, NE1 1EE",
+      "buildingNumber": "2",
+      "buildingName": "QUAYSIDE HOUSE",
+      "street": "QUAYSIDE",
+      "town": "NEWCASTLE UPON TYNE",
+      "administrativeArea": "NEWCASTLE UPON TYNE",
+      "historicCounty": "NORTHUMBERLAND",
+      "ceremonialCounty": "TYNE & WEAR",
+      "postcode": "NE1 1EE",
+      "country": "ENGLAND",
+      "xCoordinate": 425128,
+      "yCoordinate": 564215,
+      "uprn": "4510116885",
+      "match": "1",
+      "matchDescription": "EXACT",
+      "language": "EN"
+    },
+    {
+      "addressLine": "THE MILL, QUAYSIDE, NEWCASTLE UPON TYNE, NE1 1EE",
+      "buildingName": "THE MILL",
+      "street": "QUAYSIDE",
+      "town": "NEWCASTLE UPON TYNE",
+      "administrativeArea": "NEWCASTLE UPON TYNE",
+      "historicCounty": "NORTHUMBERLAND",
+      "ceremonialCounty": "TYNE & WEAR",
+      "postcode": "NE1 1EE",
+      "country": "ENGLAND",
+      "xCoordinate": 425140,
+      "yCoordinate": 564230,
+      "uprn": "4510116886",
+      "match": "1",
+      "matchDescription": "EXACT",
+      "language": "EN"
+    }
+  ]
+}

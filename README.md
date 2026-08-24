@@ -118,7 +118,10 @@ git config --global core.autocrlf false
 | `GET: /health`                                                     | Health                                        |
 | `POST: /ArcGIS/rest/services/PolicyData_MDP/FeatureServer/0/<any>` | ArcGIS stub response (accepts any query/body) |
 | `GET: /explore-marine-plans/api/policies`                          | GOV.UK policies API stub (5 policies)         |
-| `POST: /dynamics/oauth2/v2.0/token`                                | Dynamics OAuth token stub                     |
+| `POST: /oauth2/v2.0/token`                                         | Address lookup OAuth token stub               |
+| `POST: /<tenantId>/oauth2/v2.0/token`                              | Same, on the tenant-prefixed real path        |
+| `GET: /api/address-lookup/v2.1/addresses`                          | DEFRA address lookup stub (requires Bearer)   |
+| `POST: /dynamics/oauth2/v2.0/token`                                | Dynamics token stub                           |
 | `GET: /dynamics/api/data/v9.2/contacts(<guid>)`                    | Dynamics single contact stub                  |
 | `GET: /dynamics/api/data/v9.2/contacts`                            | Dynamics contacts collection stub (`$filter`) |
 | `POST: /dynamics/flows/exemptions`                                 | Dynamics exemption submission stub (202)      |
@@ -184,6 +187,72 @@ Example:
 curl "http://localhost:3001/explore-marine-plans/api/policies"
 ```
 
+### OAuth token stub endpoint
+
+The client-credentials token stub for the address lookup gateway:
+
+| Env var                                           | Path                            | Notes                                |
+| :------------------------------------------------ | :------------------------------ | :----------------------------------- |
+| `MARINE_LICENSING_ADDRESS_LOOKUP_OAUTH_TOKEN_URL` | `/oauth2/v2.0/token`            | Short form                           |
+| `MARINE_LICENSING_ADDRESS_LOOKUP_OAUTH_TOKEN_URL` | `/<tenantId>/oauth2/v2.0/token` | Mirrors the real tenant-prefixed URL |
+
+- Controller: `src/oauth/api/controllers/post-oauth-token-stub.js`
+- Token minting: `src/oauth/token.js`
+- Route index: `src/oauth/api/index.js`
+
+Dynamics has its own token stub on `/dynamics/oauth2/v2.0/token`
+(`src/dynamics/api/controllers/post-token-stub.js`) — see the Dynamics sections below. The two are
+deliberately kept separate.
+
+Behaviour:
+
+- Accepts `POST` as form-encoded or JSON
+- Requires `grant_type=client_credentials` plus a non-empty `client_id` and `client_secret`
+  (any values are accepted — this stands in for the gateway's checks, it does not verify them);
+  anything else returns `400 {"error":"invalid_request"}`. The client secret is never logged.
+- Returns `{ token_type, expires_in, ext_expires_in, access_token }`
+- The token's expiry is **encoded in the token itself** rather than stored, so there is no
+  server-side state to grow or evict. Tokens are forgeable by design — this is a dev stub, not
+  a security boundary.
+- `OAUTH_STUB_TOKEN_TTL_SECONDS` (default `3600`, minimum `1`) controls the token lifetime.
+  Set it low to drive the consumer's token refresh and 401-retry paths; `0` is rejected at
+  startup, since it would mint tokens that are already expired.
+- The address lookup endpoint checks the token it is sent; nothing else does.
+
+### Address lookup stub endpoint
+
+Drop-in replacement for `MARINE_LICENSING_ADDRESS_LOOKUP_API_URL`
+(`https://dev-api-gateway.azure.defra.cloud/api/address-lookup/v2.1/addresses`).
+
+- Route index: `src/address-lookup/api/index.js`
+- Controller: `src/address-lookup/api/controllers/get-address-lookup-stub.js`
+- Address data: `src/address-lookup/data/addresses.json`
+
+Behaviour:
+
+- `GET /api/address-lookup/v2.1/addresses?postcode=<postcode>`
+- **Requires `Authorization: Bearer <token>`** from the OAuth token stub above; missing,
+  malformed, unknown or expired tokens get `401`
+- Postcodes are matched case- and whitespace-insensitively
+- `NE4 7AR` returns 1 address, `NE1 1EE` returns 3, `NE99 1NC` returns `204 No Content`,
+  anything else returns `200` with `results: []`
+- `?maxresults=<n>` caps the returned set (default and ceiling 100; a fraction is truncated,
+  and anything else unusable falls back to the ceiling). `header.totalResults` stays the **pre-cap** count, which is how the consumer
+  detects a truncated set — `?postcode=NE1%201EE&maxresults=2` returns 2 results with
+  `totalResults: "3"`.
+- Response shape matches the live API (`header` / `results` / `_info`)
+
+Example:
+
+```bash
+TOKEN=$(curl -s -X POST "http://localhost:3001/oauth2/v2.0/token" \
+  -d 'grant_type=client_credentials&client_id=local-stub-client-id&client_secret=local-stub-client-secret' \
+  | jq -r .access_token)
+
+curl "http://localhost:3001/api/address-lookup/v2.1/addresses?postcode=NE4%207AR" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ### Dynamics contact details stub endpoints
 
 Stands in for the Dynamics 365 contact details integration, which backs the
@@ -194,14 +263,16 @@ lookup are stubbed.
 - Route index: `src/dynamics/api/index.js`
 - Controllers: `src/dynamics/api/controllers/{post-token-stub,get-contacts-stub}.js`
   (`get-contacts-stub.js` serves both contact routes, branching on whether a contact id
-  was given in the path)
+  was given in the path). The Dynamics token stub is separate from the address lookup one —
+  see [OAuth token stub endpoint](#oauth-token-stub-endpoint).
 - Shared contact resolution: `src/dynamics/helpers/resolve-contact.js`
 - Contact data: `src/dynamics/data/contacts.json`
 
 Behaviour:
 
-- `POST /dynamics/oauth2/v2.0/token` accepts any client credentials payload and returns a
-  fixed `access_token`. The client secret is never logged.
+- `POST /dynamics/oauth2/v2.0/token` issues a fixed access token
+  (`src/dynamics/api/controllers/post-token-stub.js`). The contact and flow routes below do not
+  check it.
 - `GET /dynamics/api/data/v9.2/contacts(<guid>)` returns a single contact entity with
   `fullname` (plus `firstname`, `lastname`, `emailaddress1`). `$select` is ignored.
 - `GET /dynamics/api/data/v9.2/contacts?$filter=contactid eq '<guid>' or ...` returns an
